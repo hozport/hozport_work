@@ -1,0 +1,272 @@
+<?php
+
+/** 
+ * 
+ * Class for form simple YML from OpenCart 3
+ * (work on 3.0.3.9, for work project)
+ * 
+ * Let's form some YML for Yandex 
+ * from OpenCart's database.
+ *  
+ * @author: HozPort
+ * @version: 1.0
+ * 
+*/
+class OC3toYML 
+{
+
+    ## Settings for this feed
+    private $shop_name = 'Shop title';
+    private $company_name = 'Company name';
+    private $version = '1.0';
+    private $currency_id = 'RUB';
+    private $currency_rate = '1';
+    private $delivery = 'true';
+    private $pickup = 'false';
+
+    /**
+     * Main method that return 
+     * final version of YML-code
+     * 
+     * @access public
+     * @return string
+     */
+    public function returnUml(): string {
+        
+        ## DB Connect
+        ## Change this!
+        $dbhost = "dbhost";
+        $dbusername = "dbusername"; 
+        $dbpass = "dbpass"; 
+        $dbname = "dbname";
+
+        $GLOBALS['link'] = mysqli_connect($dbhost, $dbusername, $dbpass, $dbname);
+        mysqli_set_charset($GLOBALS['link'], "UTF8");
+        $db = mysqli_query($GLOBALS['link'], "SET SESSION sql_mode = ''");
+
+        ## Render this!
+        $content = '<?xml version="1.0" encoding="UTF-8"?>
+    <yml_catalog date="'.date('Y-m-d H:i').'">
+        <shop>';
+
+        ## Form Shop info
+        $content .= $this->returnShopInfo();
+
+        ## Form Categories info
+        $content .= $this->returnCategories();
+
+        ## Form Offers info
+        $content .= $this->returnOffers();
+        
+        $content .= '
+        </shop>
+    </yml_catalog>
+        ';
+
+        mysqli_close($GLOBALS['link']);
+
+        return $content;
+    }
+
+    /**
+     * Method for Shop info
+     * 
+     * @access private
+     * @return string
+     */
+    private function returnShopInfo(): string {
+        ## Form Company block
+        $return = '
+            <name>'.$this->shop_name.'</name>
+            <company>'.$this->company_name.'</company>
+            <url>'.((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'].'/</url>
+            <version>'.$this->version.'</version>
+            <currencies>
+                <currency id="'.$this->currency_id.'" rate="'.$this->currency_rate.'"></currency>
+            </currencies>';
+
+        return $return;
+    }
+
+    /**
+     * Method for Categories list
+     * 
+     * @access private
+     * @return string
+     */
+    private function returnCategories(): string {
+        ## Form categories tree
+        $return = '
+            <categories>';
+
+        $db = mysqli_query($GLOBALS['link'], "SELECT * FROM `oc_category` JOIN `oc_category_description` ON oc_category.category_id = oc_category_description.category_id ORDER BY oc_category.parent_id, oc_category.category_id");
+        while($rows = mysqli_fetch_array($db))
+            if($rows['parent_id'] != 0)
+                $return .= '
+                <category id="'.$rows['category_id'].'" parentId="'.$rows['parent_id'].'">'.$rows['name'].'</category>';
+            else
+                $return .= '
+                <category id="'.$rows['category_id'].'">'.$rows['name'].'</category>';
+        
+        $return .= '
+            </categories>';
+
+        return $return;
+    }
+
+    /**
+     * Method for Offers list
+     * 
+     * @access private
+     * @return string
+     */
+    private function returnOffers(): string {
+        ## Form Offers block
+        $return = '
+            <offers>';
+
+        $db = mysqli_query($GLOBALS['link'], "SELECT * FROM `oc_product` JOIN `oc_product_description` ON oc_product.product_id = oc_product_description.product_id WHERE oc_product.status = '1' ORDER BY oc_product.product_id");
+        
+        ## Form Offers block
+        while($rows = mysqli_fetch_array($db)) {
+            $id = (int)$rows['product_id'];
+            ## We need an url
+            $url = $this->returnURL($id);
+            ## Manufacturer
+            $manufacturer = $this->returnManufacturer($rows['manufacturer_id']);
+            ## Category ID
+            $category_id = $this->returnCategoryId($id);
+            ## Render Offer
+            $return .= '
+                <offer id="'.$id.'" available="true">
+                    <url>'.((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'].'/'.$url.'</url>
+                    <price>'.(int)$rows['price'].'</price>
+                    <currencyId>'.$this->currency_id.'</currencyId>
+                    <vendor>'.$manufacturer.'</vendor>
+                    <categoryId>'.$category_id.'</categoryId>
+                    <name>'.$rows['name'].'</name>
+                    <picture>'.((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'].'/image/'.$rows['image'].'</picture>';
+
+                    ## More images
+                    $return .= $this->moreImages($id);
+
+                    $return .= '
+                    <delivery>'.$this->delivery.'</delivery>
+                    <pickup>'.$this->pickup.'</pickup>
+                    <count>'.$rows['quantity'].'</count>
+                    <description>
+                        <![CDATA['.preg_replace('/(<[^>]+) style=".*?"/i', '$1', htmlspecialchars_decode($rows['description'])).']]>
+                    </description>';
+
+                    ## Form chars
+                    $return .= $this->charsList($id);
+                    
+                $return .= '
+                </offer>';
+          
+        }        
+
+        $return .= '
+            </offers>';
+
+        return $return;
+    }
+
+## Offers methods
+
+    /**
+     * Method for form URL of Offer
+     * 
+     * @access private
+     * @param int $product_id ID of offer
+     * @return string
+     */
+    private function returnURL(int $product_id): string {
+        $search_address = 'product_id='.$product_id;
+
+        $db = mysqli_query($GLOBALS['link'], "SELECT `keyword` FROM `oc_seo_url` WHERE `query` = '$search_address'");
+        $row = mysqli_fetch_array($db);
+
+        return $row['keyword'];
+    }
+
+    /**
+     * Method for form Manufacturer name
+     * 
+     * @access private
+     * @param int $manufacturer_id ID of Manufacturer
+     * @return string
+     */
+    private function returnManufacturer(int $manufacturer_id): string {
+        $manufacturer = 'No brand';
+
+        $db = mysqli_query($GLOBALS['link'], "SELECT `name` FROM `oc_manufacturer` WHERE `manufacturer_id` = '$manufacturer_id'");
+        $row = mysqli_fetch_array($db);
+        if(isset($row['name']))
+            $manufacturer = $row['name'];
+
+        return $manufacturer;
+    }
+
+    /**
+     * Method for form Category ID
+     * 
+     * @access private
+     * @param int $product_id ID of offer
+     * @return int
+     */
+    private function returnCategoryId(int $product_id): int {
+        $db = mysqli_query($GLOBALS['link'], "SELECT `category_id` FROM `oc_product_to_category` WHERE `product_id` = '$product_id'");
+        $row = mysqli_fetch_array($db);
+
+        return (int)$row['category_id'];
+    }
+
+    /**
+     * Method for form Images list
+     * 
+     * @access private
+     * @param int $product_id ID of offer
+     * @return string
+     */
+    private function moreImages(int $product_id): string {
+        $return = '';
+
+        $db = mysqli_query($GLOBALS['link'], "SELECT `image` FROM `oc_product_image` WHERE `product_id` = '$product_id'");
+        while($rows = mysqli_fetch_array($db))
+            $return .= '
+                    <picture>'.((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'].'/image/'.$rows['image'].'</picture>';
+
+        return $return;
+    }
+
+    /**
+     * Method for form Chars list
+     * 
+     * @access private
+     * @param int $product_id ID of offer
+     * @return string
+     */
+    private function charsList(int $product_id): string {
+        $return = '';
+
+        $db = mysqli_query($GLOBALS['link'], "SELECT * FROM `oc_product_attribute` WHERE `product_id` = '$product_id'");
+        while($row = mysqli_fetch_array($db)) {
+            $attr = $row['attribute_id'];
+            $dba = mysqli_query($GLOBALS['link'], "SELECT `name` FROM `oc_attribute_description` WHERE `attribute_id` = '$attr'");
+            $rowa = mysqli_fetch_array($dba);
+            $return .= '
+                    <param name="'.$rowa['name'].'">'.$row['text'].'</param>';
+        }
+
+        return $return;
+    }
+
+}
+
+## Form Header Content-Type
+header("Content-Type: text/xml");
+## Let's do some YML
+$feed = new OC3toYML();
+
+echo $feed->returnUml();
