@@ -23,11 +23,11 @@ while($rows = mysqli_fetch_array($db)) {
 ## Render pagination block
 $db = mysqli_query($GLOBALS['link'], "SELECT `id` FROM `table_name`");
 $full = ceil(mysqli_num_rows($db) / $n);
-for($i = 1;$i <= $full; $i++) {
+for($i = 1; $i <= $full; $i++) {
     ## Return paginator
     echo '
-    <a href="?p='.$i.'" class="pagination">
-        <button class="list-item'; 
+    <a href="?p='.$i.'" class="pagination_link">
+        <button class="pagination_item'; 
         if($i == $page) 
             $return .= ' active'; 
         echo '">'.$i.'</button>
