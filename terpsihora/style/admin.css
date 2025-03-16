@@ -1,0 +1,47 @@
+.topMenu { width: 100%; left: 0; top: 0; background:#0D4454; position: fixed; z-index: 999 }
+.padding-right { padding-right: 15px }
+.padding-left { padding-left: 15px }
+.exitA { color: #fff; display: inline-block; margin-left: 20px }
+.exitA:hover { color: #F39B00 }
+
+.aside { position: fixed; left: 0; top: 50px; height: 100vh; background:#0D4454; padding-top: 30px }
+.aside a,
+.aside h5 { color: #fff; }
+.aside a:hover,
+.aside a.active { color: #F39B00 }
+.aside a.active { font-weight: bold }
+.aside h5 { cursor: pointer; position: relative; padding-bottom: 5px; border-bottom: 1px solid #fff }
+.aside h5:hover { color: #F39B00 }
+.aside h5::after { position: absolute; right: 4px; top: 6px; font-size: 12px; content: '▼' }
+.aside .hiddenBlock { display: none }
+.aside .hiddenBlock.active { display: block }
+
+.inside { padding: 20px 15px }
+.inside a { color: #494d4e }
+.inside a:hover { color: #F39B00; text-decoration: none }
+.inside h3 { margin: 25px 0 10px; padding-bottom: 5px; border-bottom: 1px solid #ccc }
+.catsline { margin: 30px 0; padding-bottom: 40px }
+.catsline .col-md-1 { text-align: center }
+.catsline .col-md-1 a { color: #494d4e; font-weight: bold; line-height: 120%; text-decoration: none; font-size: 14px }
+.catsline .col-md-1 a svg { margin-bottom: 5px }
+.catsline .col-md-1 a:hover { color: #F39B00 }
+
+.centerBar { margin-left: 16.666%; margin-top: 55px }
+.dopNavigation { float: right; margin-top: 20px }
+.dopNavigation a { display: inline-block; margin-left: 15px }
+
+.badge a { color: #fff; text-decoration: none }
+.badge a:hover { color:#fff }
+table .miniature { text-align: center }
+table .miniature img { height: 50px }
+table svg { margin: 5px }
+
+.imagesForGallery { padding: 25px 0 0 }
+.productGallery img { max-height: 100%; max-width: 100%; border: 1px solid #f2f2f2 }
+/* Logs System */
+.logLines { border: 1px solid #ccc; height: 600px; overflow-y: scroll }
+.logLines .oneLine { padding: 10px 15px; border-bottom: 1px solid #f2f2f2 }
+
+/* Stat */
+.statLeft p { border-bottom: 1px dotted #ccc; margin-bottom: 5px }
+.statLeft p .right { float: right }
