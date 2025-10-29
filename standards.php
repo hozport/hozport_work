@@ -15,10 +15,7 @@ protected function formBackLink(array $url_array): string {
     else 
         $back_address = '/'.implode('/', $back_array).'/';
 
-    ## Render button
-    $content = '<div class="btnPrev"><a href="'.$back_address.'">Back</a></div>';
-
-    return $content;
+    return '<div class="btnPrev"><a href="'.$back_address.'">Back</a></div>';
 }
 
 /**
